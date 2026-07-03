@@ -29,6 +29,7 @@ import { WorkItemRelationDefinitions } from "../api/WorkItemRelationDefinitions"
 import { Releases } from "../api/Releases";
 import { Workflows } from "../api/Workflows";
 import { ProjectTemplates } from "../api/ProjectTemplates";
+import { Workload } from "../api/Workload";
 
 /**
  * Main Plane Client class
@@ -66,6 +67,7 @@ export class PlaneClient {
   public releases: Releases;
   public workflows: Workflows;
   public projectTemplates: ProjectTemplates;
+  public workload: Workload;
 
   constructor(config: { baseUrl?: string; apiKey?: string; accessToken?: string; enableLogging?: boolean }) {
     this.config = new Configuration({
@@ -109,5 +111,6 @@ export class PlaneClient {
     this.releases = new Releases(this.config);
     this.workflows = new Workflows(this.config);
     this.projectTemplates = new ProjectTemplates(this.config);
+    this.workload = new Workload(this.config);
   }
 }
