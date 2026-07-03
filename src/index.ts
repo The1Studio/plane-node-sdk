@@ -41,6 +41,7 @@ export { WorkItemRelationDefinitions } from "./api/WorkItemRelationDefinitions";
 export { Releases } from "./api/Releases";
 export { Workflows } from "./api/Workflows";
 export { ProjectTemplates } from "./api/ProjectTemplates";
+export { Workload } from "./api/Workload";
 
 // Sub-resources
 export { Relations as WorkItemRelations } from "./api/WorkItems/Relations";
