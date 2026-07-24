@@ -87,6 +87,8 @@ const project = await client.projects.create("workspace-slug", {
 - **Workflows**: Project workflow management with state attachments and transitions
 - **ProjectTemplates**: Work item and page template management per project
 - **Features**: Workspace and project features management
+- **Workload**: Workload matrix, per-work-item hour estimates, and parent-issue rollups
+- **Github**: GitHub integration — three-tier PR-lifecycle status config and work-item GitHub links
 
 ## Development
 

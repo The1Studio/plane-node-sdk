@@ -30,6 +30,7 @@ import { Releases } from "../api/Releases";
 import { Workflows } from "../api/Workflows";
 import { ProjectTemplates } from "../api/ProjectTemplates";
 import { Workload } from "../api/Workload";
+import { Github } from "../api/Github";
 
 /**
  * Main Plane Client class
@@ -68,6 +69,7 @@ export class PlaneClient {
   public workflows: Workflows;
   public projectTemplates: ProjectTemplates;
   public workload: Workload;
+  public github: Github;
 
   constructor(config: { baseUrl?: string; apiKey?: string; accessToken?: string; enableLogging?: boolean }) {
     this.config = new Configuration({
@@ -112,5 +114,6 @@ export class PlaneClient {
     this.workflows = new Workflows(this.config);
     this.projectTemplates = new ProjectTemplates(this.config);
     this.workload = new Workload(this.config);
+    this.github = new Github(this.config);
   }
 }
