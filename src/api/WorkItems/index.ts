@@ -43,6 +43,25 @@ export class WorkItems extends BaseResource {
 
   /**
    * Create a new work item
+   *
+   * The server fills two fields when the request does not carry them:
+   *
+   * - no `assignees` property -> assigned to the authenticated caller. The
+   *   project's own `default_assignee` still takes precedence, and a caller who
+   *   is not an active project member at role >= 15 is skipped, leaving the item
+   *   unassigned rather than assigning someone who cannot see it.
+   * - no `target_date` property -> today, in the CALLER's own timezone, not the
+   *   server's UTC date. When `start_date` is in the future the default is
+   *   `start_date` instead, so a future start date can never produce the
+   *   server's "Start date cannot exceed target date" error.
+   *
+   * An ABSENT field and an EXPLICITLY EMPTY one are different. Pass `[]` for
+   * `assignees`, or `null` for `target_date`, to opt out deliberately; omitting
+   * the property asks for the default. This works because `JSON.stringify`
+   * drops `undefined` but preserves `null`, so both intents survive the wire.
+   *
+   * Updates never default: clearing either field through `update` leaves it
+   * cleared. Intake creation is excluded server-side.
    */
   async create(workspaceSlug: string, projectId: string, createWorkItem: CreateWorkItem): Promise<WorkItem> {
     return this.post<WorkItem>(`/workspaces/${workspaceSlug}/projects/${projectId}/work-items/`, createWorkItem);
