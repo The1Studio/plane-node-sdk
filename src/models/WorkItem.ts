@@ -51,17 +51,36 @@ export type WorkItem<Expanded extends WorkItemExpandableFieldName = never> = [Ex
       [K in Expanded]: K extends keyof WorkItemExpandableFields ? WorkItemExpandableFields[K] : never;
     };
 
+/**
+ * Work-item creation payload.
+ *
+ * Two fields are filled by the server when the request does not carry them:
+ * an absent `assignees` assigns the authenticated caller, and an absent
+ * `target_date` becomes today in the caller's own timezone. See
+ * {@link WorkItems.create} for the full contract.
+ *
+ * Omitting a property and passing an explicitly empty value are NOT the same
+ * thing. `JSON.stringify` drops `undefined` but keeps `null`, so an omitted
+ * property reaches the server as absent (and gets the default) while an
+ * explicit `[]` or `null` reaches it as a deliberate "nobody" / "no due date".
+ */
 export interface CreateWorkItem {
   name: string;
   description_html?: string;
   state?: string;
+  /** Omit for the creator; pass `[]` to create the work item deliberately unassigned. */
   assignees?: string[];
   labels?: string[];
   parent?: string;
   estimate_point?: string;
   type?: string;
   module?: string;
-  target_date?: string;
+  /**
+   * Omit for today (in the caller's timezone). Pass `null` to create the work
+   * item deliberately without a due date — `null` is accepted here precisely so
+   * that opt-out is expressible; omitting the property cannot say it.
+   */
+  target_date?: string | null;
   start_date?: string;
   priority?: PriorityEnum;
 }
