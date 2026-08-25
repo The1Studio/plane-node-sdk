@@ -42,8 +42,59 @@ export interface GetWorkloadParams {
   date_to: string;
   project_ids?: string[];
   assignee_ids?: string[];
-  /** Defaults (when omitted) exclude `completed` and `cancelled` state groups. */
+  /**
+   * When omitted, EVERY state group is returned — including `completed` and
+   * `cancelled`. An earlier version of this comment claimed the two were
+   * excluded by default; the server has no such `else` branch, and silently
+   * applying a filter the caller could neither see nor clear was the bug that
+   * removed it.
+   */
   state_group?: StateGroup[];
+}
+
+/** One work item on an assignee's row. */
+export interface WorkloadTask {
+  id: string;
+  /** Owning project — required to build a work-item link. */
+  project_id: string;
+  /** `"<PROJECT>-<sequence_id>"`, e.g. `"ENG-42"`. */
+  identifier: string;
+  name: string;
+  /**
+   * THIS assignee's share of the work item's estimate, not the whole
+   * estimate: a work item may carry several assignees and its hours are split
+   * evenly across them, so a shared 8h item reports 4h on each of two rows.
+   * `total_hours` keeps the undivided figure.
+   */
+  hours: number;
+  total_hours: number;
+  assignee_count: number;
+  start_date: string | null;
+  target_date: string | null;
+  state_group: StateGroup;
+  /** Normalised to `""` rather than null when the state has no name. */
+  state_name: string;
+  /**
+   * The state's own colour. A FREE-FORM CSS colour string, not a guaranteed
+   * hex — server-side it is an unvalidated CharField, so `""`, `"#fa0"`,
+   * `"rgb(...)"` and named colours are all reachable. Do not parse it, and do
+   * not assume it is non-empty.
+   */
+  state_color: string;
+  /**
+   * True when the work item has no estimate row, or one with `hours <= 0`.
+   * Such an item carries `hours: 0` and `total_hours: 0` and contributes to
+   * NO capacity figure — every bucket and total on the row is identical to a
+   * response without it.
+   *
+   * **Do not infer this from `hours === 0`.** A stored zero-hour estimate is
+   * a real, reachable state (counted separately in
+   * `WorkloadMatrixMeta.zero_estimate_count`), so the arithmetic test
+   * misclassifies it. Always present; an estimated row carries `false`.
+   */
+  unestimated: boolean;
+  /** `target_date` is in the past and the item is not in a terminal state. */
+  overdue: boolean;
 }
 
 export interface WorkloadMatrixRow {
@@ -51,7 +102,29 @@ export interface WorkloadMatrixRow {
   assignee_name: string;
   /** Period key (matches a value in `WorkloadMatrix.periods`) -> hours. */
   buckets: Record<string, number>;
+  /**
+   * Hours per calendar month (`"2026-08"`), independent of the requested
+   * granularity. Sparse. Exists because a week bucket is keyed by the date
+   * its week begins, so summing week buckets for a month credits a
+   * straddling week entirely to the month it started in.
+   */
+  month_buckets?: Record<string, number>;
   total: number;
+  /** Prorated capacity, keyed by the same periods as `buckets`. */
+  capacity_buckets?: Record<string, number>;
+  /** Per-period overload flag, keyed identically to `capacity_buckets`. */
+  over?: Record<string, boolean>;
+  /** `total` exceeds the summed `capacity_buckets` across the whole window. */
+  total_over?: boolean;
+  /**
+   * Per-item detail, capped at 200 per assignee. Sorted with unestimated
+   * items FIRST, and the cap is SHARED between the two kinds — so an
+   * assignee with a large unestimated backlog can have estimated rows
+   * truncated away, and `tasks[0]` is not the earliest-dated row.
+   */
+  tasks: WorkloadTask[];
+  /** True when this row's `tasks` hit the 200-per-assignee cap. */
+  tasks_truncated: boolean;
 }
 
 export interface WorkloadUnscheduledEntry {
@@ -60,8 +133,15 @@ export interface WorkloadUnscheduledEntry {
 }
 
 export interface WorkloadMatrixMeta {
+  /** Estimated items only — this and `issues_unscheduled` describe hours. */
   issues_counted: number;
   issues_unscheduled: number;
+  /**
+   * Countable in-scope items with no usable estimate. A superset of
+   * `zero_estimate_count`, which sees only stored rows with `hours <= 0` and
+   * not items carrying no estimate row at all.
+   */
+  issues_unestimated: number;
   dirty_date_count: number;
   zero_estimate_count: number;
   unscheduled_ratio: number;
@@ -71,8 +151,17 @@ export interface WorkloadMatrixMeta {
 /**
  * Workload matrix response. Counts LEAF work items only — parents with
  * countable sub-items never appear as rows here (their totals live in the
- * rollup endpoints instead). Default state filter excludes `completed` and
- * `cancelled` groups unless `state_group` is explicitly provided.
+ * rollup endpoints instead). There is NO default state filter: when
+ * `state_group` is omitted every group is returned, `completed` and
+ * `cancelled` included.
+ *
+ * `rows` counts PEOPLE, not work — every active, non-bot member of the
+ * in-scope projects gets a row whether or not they carry anything, so
+ * `rows.length` is a headcount. To ask whether this window holds any work,
+ * test `rows.some((r) => r.tasks.length > 0 || r.total > 0)`; both halves are
+ * needed, because `total` alone misses a member whose only work is
+ * unscheduled or unestimated, and `tasks` alone misses hours whose rows were
+ * cut by the 200-per-assignee cap.
  */
 export interface WorkloadMatrix {
   granularity: WorkloadGranularity;
