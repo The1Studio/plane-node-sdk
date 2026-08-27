@@ -42,6 +42,7 @@ export { Releases } from "./api/Releases";
 export { Workflows } from "./api/Workflows";
 export { ProjectTemplates } from "./api/ProjectTemplates";
 export { Workload } from "./api/Workload";
+export { Github } from "./api/Github";
 
 // Sub-resources
 export { Relations as WorkItemRelations } from "./api/WorkItems/Relations";

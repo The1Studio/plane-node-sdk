@@ -35,3 +35,4 @@ export * from "./Release";
 export * from "./Workflow";
 export * from "./ProjectTemplate";
 export * from "./Workload";
+export * from "./Github";
