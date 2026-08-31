@@ -4,6 +4,7 @@ export * from "./Comment";
 export * from "./common";
 export * from "./Customer";
 export * from "./Cycle";
+export * from "./CascadeExt";
 export * from "./Epic";
 export * from "./Initiative";
 export * from "./InitiativeLabel";

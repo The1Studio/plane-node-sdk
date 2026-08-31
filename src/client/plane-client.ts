@@ -31,6 +31,7 @@ import { Workflows } from "../api/Workflows";
 import { ProjectTemplates } from "../api/ProjectTemplates";
 import { Workload } from "../api/Workload";
 import { Github } from "../api/Github";
+import { CascadeExt } from "../api/CascadeExt";
 
 /**
  * Main Plane Client class
@@ -70,6 +71,7 @@ export class PlaneClient {
   public projectTemplates: ProjectTemplates;
   public workload: Workload;
   public github: Github;
+  public cascadeExt: CascadeExt;
 
   constructor(config: { baseUrl?: string; apiKey?: string; accessToken?: string; enableLogging?: boolean }) {
     this.config = new Configuration({
@@ -115,5 +117,6 @@ export class PlaneClient {
     this.projectTemplates = new ProjectTemplates(this.config);
     this.workload = new Workload(this.config);
     this.github = new Github(this.config);
+    this.cascadeExt = new CascadeExt(this.config);
   }
 }
