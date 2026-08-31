@@ -43,6 +43,7 @@ export { Workflows } from "./api/Workflows";
 export { ProjectTemplates } from "./api/ProjectTemplates";
 export { Workload } from "./api/Workload";
 export { Github } from "./api/Github";
+export { CascadeExt } from "./api/CascadeExt";
 
 // Sub-resources
 export { Relations as WorkItemRelations } from "./api/WorkItems/Relations";
