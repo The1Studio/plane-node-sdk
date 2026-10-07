@@ -12,6 +12,10 @@ on:
     branches:
       - check-tests
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   build-lint:
     runs-on: ubuntu-latest
